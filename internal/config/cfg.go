@@ -16,22 +16,10 @@ func getHomeDir() (string, error) {
 }
 
 func (c *Config) SetUser(user string) error {
-	newCfg := Config{
+	err := Write(Config{
 		DbUrl:           c.DbUrl,
 		CurrentUserName: user,
-	}
-
-	byteData, err := json.Marshal(newCfg)
-	if err != nil {
-		return err
-	}
-
-	homeDir, err := getHomeDir()
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(homeDir+"/"+configFilePath, byteData, 0600)
+	})
 	if err != nil {
 		return err
 	}
@@ -59,4 +47,21 @@ func Read() (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func Write(config Config) error {
+	byteData, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+	homeDir, err := getHomeDir()
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(homeDir+"/"+configFilePath, byteData, 0600)
+	if err != nil {
+		return err
+	}
+	return nil
 }
