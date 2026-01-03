@@ -5,13 +5,20 @@ type Config struct {
 	CurrentUserName string `json:"current_user_name"`
 }
 
+func (c *Config) SetUser(user string) error {
+	err := Write(Config{
+		DbUrl:           c.DbUrl,
+		CurrentUserName: user,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type State struct {
-	state *Config
+	State *Config
 }
 
-type Command struct {
-	name string
-	args []string
-}
-
-const configFilePath = ".gatorConfig.json"
+const configFilePath = ".gatorconfig.json"

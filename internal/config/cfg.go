@@ -15,18 +15,6 @@ func getHomeDir() (string, error) {
 	return homeDir, nil
 }
 
-func (c *Config) SetUser(user string) error {
-	err := Write(Config{
-		DbUrl:           c.DbUrl,
-		CurrentUserName: user,
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func Read() (Config, error) {
 	homeDir, err := getHomeDir()
 	if err != nil {
