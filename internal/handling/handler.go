@@ -157,3 +157,11 @@ func HandlerFeeds(s *config.State, cmd Command) error {
 	}
 	return nil
 }
+
+func HandlerFollow(s *config.State, cmd Command) error {
+	if len(cmd.Args) < 1 {
+		return fmt.Errorf("No arguements passed. Expected username")
+	}
+
+	return nil
+}
