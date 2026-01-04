@@ -37,22 +37,19 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	}
 
 	cleanFeed := unescape(feed)
-	if err != nil {
-		return &RSSFeed{}, fmt.Errorf("Failed to unescape:\n%v\n", err)
-	}
 
 	return cleanFeed, nil
 }
 
 func unescape(input *RSSFeed) *RSSFeed {
-	var result *RSSFeed
+	result := &RSSFeed{}
 
 	result.Channel.Title = html.UnescapeString(input.Channel.Title)
 	result.Channel.Link = html.UnescapeString(input.Channel.Link)
 	result.Channel.Description = html.UnescapeString(input.Channel.Description)
 
-	var resultItem *RSSItem
-	if len(result.Channel.Item) > 0 {
+	resultItem := &RSSItem{}
+	if len(input.Channel.Item) > 0 {
 		for _, item := range input.Channel.Item {
 			resultItem.Title = html.UnescapeString(item.Title)
 			resultItem.Link = html.UnescapeString(item.Link)
