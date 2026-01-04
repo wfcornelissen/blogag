@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
+func FetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
 	if err != nil {
 		os.Exit(1)
@@ -23,20 +23,20 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 		os.Exit(1)
 		return &RSSFeed{}, fmt.Errorf("Request failed:\n%v\n", err)
 	}
-	res.Body.Close()
+	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return &RSSFeed{}, fmt.Errorf("Failed to read response body:\n%v\n", err)
 	}
 
-	var feed *RSSFeed
+	var feed RSSFeed
 	err = xml.Unmarshal(body, &feed)
 	if err != nil {
 		return &RSSFeed{}, fmt.Errorf("Failed to unmarshal:\n%v\n", err)
 	}
 
-	cleanFeed := unescape(feed)
+	cleanFeed := unescape(&feed)
 
 	return cleanFeed, nil
 }
@@ -48,15 +48,15 @@ func unescape(input *RSSFeed) *RSSFeed {
 	result.Channel.Link = html.UnescapeString(input.Channel.Link)
 	result.Channel.Description = html.UnescapeString(input.Channel.Description)
 
-	resultItem := &RSSItem{}
 	if len(input.Channel.Item) > 0 {
 		for _, item := range input.Channel.Item {
-			resultItem.Title = html.UnescapeString(item.Title)
-			resultItem.Link = html.UnescapeString(item.Link)
-			resultItem.Description = html.UnescapeString(item.Description)
-			resultItem.PubDate = html.UnescapeString(item.PubDate)
-
-			result.Channel.Item = append(result.Channel.Item, *resultItem)
+			resultItem := RSSItem{
+				Title:       html.UnescapeString(item.Title),
+				Link:        html.UnescapeString(item.Link),
+				Description: html.UnescapeString(item.Description),
+				PubDate:     html.UnescapeString(item.PubDate),
+			}
+			result.Channel.Item = append(result.Channel.Item, resultItem)
 		}
 	}
 

@@ -10,7 +10,7 @@ import (
 )
 
 const resetDatabase = `-- name: ResetDatabase :exec
-TRUNCATE TABLE users
+TRUNCATE TABLE users, feeds CASCADE
 `
 
 func (q *Queries) ResetDatabase(ctx context.Context) error {

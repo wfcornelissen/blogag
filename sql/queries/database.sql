@@ -1,2 +1,2 @@
 -- name: ResetDatabase :exec
-TRUNCATE TABLE users;
+TRUNCATE TABLE users, feeds CASCADE;

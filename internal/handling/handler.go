@@ -4,23 +4,26 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/wfcornelissen/blogag/internal/config"
 	"github.com/wfcornelissen/blogag/internal/database"
+	"github.com/wfcornelissen/blogag/internal/rss"
 )
 
 func HandlerLogin(s *config.State, cmd Command) error {
 	if len(cmd.Args) < 1 {
 		return fmt.Errorf("No arguements passed. Expected username")
 	}
-	// Check if user already exists
+	// Check if user exists
 	_, err := s.Db.GetUser(context.Background(), cmd.Args[0])
 	if err != nil {
-		os.Exit(1)
-		return fmt.Errorf("user '%s' doesnt exist", cmd.Args[0])
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("user '%s' doesnt exist", cmd.Args[0])
+		}
+		// Database error other than "not found"
+		return fmt.Errorf("failed to check if user exists: %w", err)
 	}
 
 	err = s.State.SetUser(cmd.Args[0])
@@ -50,7 +53,7 @@ func HandlerRegister(s *config.State, cmd Command) error {
 
 	// User doesn't exist, create it
 	userParams := database.CreateUserParams{
-		ID:        uuid.NullUUID{UUID: uuid.New(), Valid: true},
+		ID:        uuid.New(),
 		CreatedAt: sql.NullTime{Time: time.Now(), Valid: true},
 		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
 		Name:      cmd.Args[0],
@@ -71,7 +74,6 @@ func HandlerRegister(s *config.State, cmd Command) error {
 func HandlerReset(s *config.State, cmd Command) error {
 	err := s.Db.ResetDatabase(context.Background())
 	if err != nil {
-		os.Exit(1)
 		return fmt.Errorf("Error resetting database:\n%v", err)
 	}
 	return nil
@@ -80,8 +82,7 @@ func HandlerReset(s *config.State, cmd Command) error {
 func HandlerUsers(s *config.State, cmd Command) error {
 	users, err := s.Db.GetUsers(context.Background())
 	if err != nil {
-		os.Exit(1)
-		return fmt.Errorf("Couldn't retrieve users from database:\n", err)
+		return fmt.Errorf("Couldn't retrieve users from database:\n%v\n", err)
 	}
 
 	for _, user := range users {
@@ -91,5 +92,24 @@ func HandlerUsers(s *config.State, cmd Command) error {
 		}
 		fmt.Printf(" * %v\n", user.Name)
 	}
+	return nil
+}
+
+func HandlerAgg(s *config.State, cmd Command) error {
+	const url = "https://www.wagslane.dev/index.xml"
+	feed, err := rss.FetchFeed(context.Background(), url)
+	if err != nil {
+		return fmt.Errorf("Couldn't fetch feed:\n%v\n", err)
+	}
+
+	feed.Display()
+	return nil
+}
+
+func HandlerAddFeed(s *config.State, cmd Command) error {
+	if len(cmd.Args) < 2 {
+		return fmt.Errorf("Too few arguements passed. Expected feed name and URL.")
+	}
+
 	return nil
 }
