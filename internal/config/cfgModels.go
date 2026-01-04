@@ -1,5 +1,7 @@
 package config
 
+import "github.com/wfcornelissen/blogag/internal/database"
+
 type Config struct {
 	DbUrl           string `json:"db_url"`
 	CurrentUserName string `json:"current_user_name"`
@@ -18,6 +20,7 @@ func (c *Config) SetUser(user string) error {
 }
 
 type State struct {
+	Db    *database.Queries
 	State *Config
 }
 
