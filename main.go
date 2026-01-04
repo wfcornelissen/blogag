@@ -60,6 +60,8 @@ func main() {
 
 	cmds.Register("login", handling.HandlerLogin)
 	cmds.Register("register", handling.HandlerRegister)
+	cmds.Register("reset", handling.HandlerReset)
+	cmds.Register("users", handling.HandlerUsers)
 
 	var newCommand handling.Command
 	input := os.Args[1:] // Skip program name

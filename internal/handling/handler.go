@@ -69,5 +69,27 @@ func HandlerRegister(s *config.State, cmd Command) error {
 }
 
 func HandlerReset(s *config.State, cmd Command) error {
+	err := s.Db.ResetDatabase(context.Background())
+	if err != nil {
+		os.Exit(1)
+		return fmt.Errorf("Error resetting database:\n%v", err)
+	}
+	return nil
+}
+
+func HandlerUsers(s *config.State, cmd Command) error {
+	users, err := s.Db.GetUsers(context.Background())
+	if err != nil {
+		os.Exit(1)
+		return fmt.Errorf("Couldn't retrieve users from database:\n", err)
+	}
+
+	for _, user := range users {
+		if user.Name == s.State.CurrentUserName {
+			fmt.Printf(" * %v (current)\n", user.Name)
+			continue
+		}
+		fmt.Printf(" * %v\n", user.Name)
+	}
 	return nil
 }
