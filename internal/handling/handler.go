@@ -111,5 +111,49 @@ func HandlerAddFeed(s *config.State, cmd Command) error {
 		return fmt.Errorf("Too few arguements passed. Expected feed name and URL.")
 	}
 
+	cfg, err := config.Read()
+	if err != nil {
+		return fmt.Errorf("Error fetching config:\n%v\n", err)
+	}
+
+	user, err := s.Db.GetUser(context.Background(), cfg.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve user data from databse:\n%v\n", err)
+	}
+
+	feed := database.CreateFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		Name:      sql.NullString{String: cmd.Args[0], Valid: true},
+		Url:       sql.NullString{String: cmd.Args[1], Valid: true},
+		UserID:    user.ID,
+	}
+	resFeed, err := s.Db.CreateFeed(context.Background(), feed)
+	if err != nil {
+		return fmt.Errorf("Error uploading feed to db:\n%v\n", err)
+	}
+
+	fmt.Println(resFeed)
+
+	return nil
+}
+
+func HandlerFeeds(s *config.State, cmd Command) error {
+	feeds, err := s.Db.GetAllFeeds(context.Background())
+	if err != nil {
+		return fmt.Errorf("Failed to fetch feeds from db:\n%v\n", err)
+	}
+
+	for _, feed := range feeds {
+		userName, err := s.Db.GetUserByID(context.Background(), feed.UserID)
+		if err != nil {
+			return fmt.Errorf("Failed to fetch username: \n%v\n", err)
+		}
+		fmt.Printf("Name:	%v\n", feed.Name)
+		fmt.Printf("URL:	%v\n", feed.Url)
+		fmt.Printf("Name:	%v\n", userName)
+		fmt.Println("--- END OF FEEDS ---")
+	}
 	return nil
 }

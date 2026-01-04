@@ -64,6 +64,7 @@ func main() {
 	cmds.Register("users", handling.HandlerUsers)
 	cmds.Register("agg", handling.HandlerAgg)
 	cmds.Register("addfeed", handling.HandlerAddFeed)
+	cmds.Register("feeds", handling.HandlerFeeds)
 
 	var newCommand handling.Command
 	input := os.Args[1:] // Skip program name
