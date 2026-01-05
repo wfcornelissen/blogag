@@ -96,14 +96,25 @@ func HandlerUsers(s *config.State, cmd Command) error {
 }
 
 func HandlerAgg(s *config.State, cmd Command) error {
-	const url = "https://www.wagslane.dev/index.xml"
-	feed, err := rss.FetchFeed(context.Background(), url)
-	if err != nil {
-		return fmt.Errorf("Couldn't fetch feed:\n%v\n", err)
+	if len(cmd.Args) < 1 {
+		return fmt.Errorf("No arguements passed. Expected username")
 	}
 
-	feed.Display()
-	return nil
+	duration, err := time.ParseDuration(cmd.Args[0])
+	if err != nil {
+		return fmt.Errorf("Failed to parse duration:/n%v/n", err)
+	}
+
+	ticker := time.NewTicker(duration)
+	for ; ; <-ticker.C {
+		fmt.Printf("Collecting feeds every %v", duration)
+		err := scrapeFeeds(s)
+		if err != nil {
+			break
+		}
+	}
+
+	return err
 }
 
 func HandlerAddFeed(s *config.State, cmd Command, user database.User) error {
@@ -223,5 +234,30 @@ func HandlerUnfollow(s *config.State, cmd Command, user database.User) error {
 		return fmt.Errorf("Couldnt delete feed follow:/n%v/n", err)
 	}
 
+	return nil
+}
+
+func scrapeFeeds(s *config.State) error {
+	feedToFetch, err := s.Db.GetNextFeedToFetch(context.Background())
+	if err != nil {
+		return fmt.Errorf("Failed to fetch next feed:/n%v/n", err)
+	}
+
+	err = s.Db.MarkFeedFetched(context.Background(),
+		database.MarkFeedFetchedParams{
+			LastFetchedAt: sql.NullTime{
+				Time:  time.Now(),
+				Valid: true},
+			Url: feedToFetch.Url})
+	if err != nil {
+		return fmt.Errorf("Failed to mark feed as fetched:/n%v/n", err)
+	}
+
+	feed, err := rss.FetchFeed(context.Background(), feedToFetch.Url.String)
+	if err != nil {
+		return fmt.Errorf("Failed to mark feed as fetched:/n%v/n", err)
+	}
+
+	feed.Display()
 	return nil
 }
