@@ -189,3 +189,21 @@ func HandlerFollow(s *config.State, cmd Command) error {
 
 	return nil
 }
+
+func HandlerFollowing(s *config.State, cmd Command) error {
+	userName := s.State.CurrentUserName
+	user, err := s.Db.GetUser(context.Background(), userName)
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve user id: /n%v/n", err)
+	}
+
+	following, err := s.Db.GetFeedFollowsForUser(context.Background(), user.ID)
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve follows for user id: /n%v/n", err)
+	}
+
+	for _, feed := range following {
+		fmt.Printf("Feed name: %v/n", feed.FeedName)
+	}
+	return nil
+}
