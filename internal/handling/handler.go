@@ -136,6 +136,19 @@ func HandlerAddFeed(s *config.State, cmd Command) error {
 
 	fmt.Println(resFeed)
 
+	newFollow := database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	}
+
+	_, err = s.Db.CreateFeedFollow(context.Background(), newFollow)
+	if err != nil {
+		return fmt.Errorf("Failed to create feed follow: /n%v/n", err)
+	}
+
 	return nil
 }
 
@@ -166,7 +179,7 @@ func HandlerFollow(s *config.State, cmd Command) error {
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve user id: /n%v/n", err)
 	}
-	url := cmd.Args[1]
+	url := cmd.Args[0]
 	feed, err := s.Db.GetFeedByURL(context.Background(), sql.NullString{String: url, Valid: true})
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve feed id: /n%v/n", err)
