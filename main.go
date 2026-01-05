@@ -69,6 +69,7 @@ func main() {
 	cmds.Register("follow", middleware.MiddlewareLoggedIn(handling.HandlerFollow))
 	cmds.Register("following", middleware.MiddlewareLoggedIn(handling.HandlerFollowing))
 	cmds.Register("unfollow", middleware.MiddlewareLoggedIn(handling.HandlerUnfollow))
+	cmds.Register("browse", middleware.MiddlewareLoggedIn(handling.HandlerBrowse))
 
 	var newCommand handling.Command
 	input := os.Args[1:] // Skip program name

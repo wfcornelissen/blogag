@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -237,6 +238,41 @@ func HandlerUnfollow(s *config.State, cmd Command, user database.User) error {
 	return nil
 }
 
+func HandlerBrowse(s *config.State, cmd Command, user database.User) error {
+	postLimit := 2
+	if len(cmd.Args) >= 1 {
+		command, err := strconv.Atoi(cmd.Args[0])
+		if err != nil {
+			return fmt.Errorf("Failed to convert command to int:\n%v\n", err)
+		}
+		postLimit = command
+	}
+	params := database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  int32(postLimit),
+	}
+
+	posts, err := s.Db.GetPostsForUser(context.Background(), params)
+	if err != nil {
+		return fmt.Errorf("Failed to fetch posts:/n%v/v", err)
+	}
+
+	for _, post := range posts {
+		fmt.Println("════════════════════════════════════════════════════════════")
+		fmt.Printf("📰 %s\n", post.Title)
+		fmt.Printf("🔗 %s\n", post.Url)
+		if post.Description.Valid && post.Description.String != "" {
+			fmt.Printf("📝 %s\n", post.Description.String)
+		}
+		if post.PublishedAt.Valid {
+			fmt.Printf("📅 %s\n", post.PublishedAt.Time.Format("Mon, 02 Jan 2006 15:04"))
+		}
+	}
+	fmt.Println("════════════════════════════════════════════════════════════")
+
+	return nil
+}
+
 func scrapeFeeds(s *config.State) error {
 	feedToFetch, err := s.Db.GetNextFeedToFetch(context.Background())
 	if err != nil {
@@ -259,5 +295,35 @@ func scrapeFeeds(s *config.State) error {
 	}
 
 	feed.Display()
+	if len(feed.Channel.Item) > 0 {
+		for _, item := range feed.Channel.Item {
+			pubAt, err := time.Parse(time.RFC1123Z, item.PubDate)
+			if err != nil {
+				// Try RFC1123 as fallback
+				pubAt, err = time.Parse(time.RFC1123, item.PubDate)
+				if err != nil {
+					fmt.Printf("Warning: couldn't parse date '%s': %v\n", item.PubDate, err)
+					pubAt = time.Now() // Use current time as fallback
+				}
+			}
+			post := database.CreatePostParams{
+				ID:          uuid.New(),
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+				Title:       item.Title,
+				Url:         item.Link,
+				Description: sql.NullString{String: item.Description, Valid: true},
+				PublishedAt: sql.NullTime{Time: pubAt, Valid: true},
+				FeedID:      uuid.NullUUID{UUID: feedToFetch.ID, Valid: true},
+			}
+
+			err = s.Db.CreatePost(context.Background(), post)
+			if err != nil {
+				// Skip duplicates, continue with other posts
+				fmt.Printf("Skipping post '%s': %v\n", item.Title, err)
+				continue
+			}
+		}
+	}
 	return nil
 }
