@@ -202,3 +202,26 @@ func HandlerFollowing(s *config.State, cmd Command, user database.User) error {
 	}
 	return nil
 }
+
+func HandlerUnfollow(s *config.State, cmd Command, user database.User) error {
+	if len(cmd.Args) < 1 {
+		return fmt.Errorf("No arguements passed. Expected username")
+	}
+
+	feed, err := s.Db.GetFeedByURL(context.Background(), sql.NullString{String: cmd.Args[0], Valid: true})
+	if err != nil {
+		return fmt.Errorf("Couldnt get feed ID:/n%v/n", err)
+	}
+
+	req := database.DeleteFeedFollowParams{
+		UserID: user.ID,
+		FeedID: feed.ID,
+	}
+
+	err = s.Db.DeleteFeedFollow(context.Background(), req)
+	if err != nil {
+		return fmt.Errorf("Couldnt delete feed follow:/n%v/n", err)
+	}
+
+	return nil
+}

@@ -68,6 +68,7 @@ func main() {
 	cmds.Register("feeds", handling.HandlerFeeds)
 	cmds.Register("follow", middleware.MiddlewareLoggedIn(handling.HandlerFollow))
 	cmds.Register("following", middleware.MiddlewareLoggedIn(handling.HandlerFollowing))
+	cmds.Register("unfollow", middleware.MiddlewareLoggedIn(handling.HandlerUnfollow))
 
 	var newCommand handling.Command
 	input := os.Args[1:] // Skip program name
