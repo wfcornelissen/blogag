@@ -11,6 +11,7 @@ import (
 	"github.com/wfcornelissen/blogag/internal/config"
 	"github.com/wfcornelissen/blogag/internal/database"
 	"github.com/wfcornelissen/blogag/internal/handling"
+	"github.com/wfcornelissen/blogag/internal/middleware"
 )
 
 func main() {
@@ -63,10 +64,10 @@ func main() {
 	cmds.Register("reset", handling.HandlerReset)
 	cmds.Register("users", handling.HandlerUsers)
 	cmds.Register("agg", handling.HandlerAgg)
-	cmds.Register("addfeed", handling.HandlerAddFeed)
+	cmds.Register("addfeed", middleware.MiddlewareLoggedIn(handling.HandlerAddFeed))
 	cmds.Register("feeds", handling.HandlerFeeds)
-	cmds.Register("follow", handling.HandlerFollow)
-	cmds.Register("following", handling.HandlerFollowing)
+	cmds.Register("follow", middleware.MiddlewareLoggedIn(handling.HandlerFollow))
+	cmds.Register("following", middleware.MiddlewareLoggedIn(handling.HandlerFollowing))
 
 	var newCommand handling.Command
 	input := os.Args[1:] // Skip program name

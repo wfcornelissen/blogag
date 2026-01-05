@@ -106,19 +106,9 @@ func HandlerAgg(s *config.State, cmd Command) error {
 	return nil
 }
 
-func HandlerAddFeed(s *config.State, cmd Command) error {
+func HandlerAddFeed(s *config.State, cmd Command, user database.User) error {
 	if len(cmd.Args) < 2 {
 		return fmt.Errorf("Too few arguements passed. Expected feed name and URL.")
-	}
-
-	cfg, err := config.Read()
-	if err != nil {
-		return fmt.Errorf("Error fetching config:\n%v\n", err)
-	}
-
-	user, err := s.Db.GetUser(context.Background(), cfg.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf("Failed to retrieve user data from databse:\n%v\n", err)
 	}
 
 	feed := database.CreateFeedParams{
@@ -171,14 +161,11 @@ func HandlerFeeds(s *config.State, cmd Command) error {
 	return nil
 }
 
-func HandlerFollow(s *config.State, cmd Command) error {
+func HandlerFollow(s *config.State, cmd Command, user database.User) error {
 	if len(cmd.Args) < 1 {
 		return fmt.Errorf("No arguements passed. Expected username")
 	}
-	user, err := s.Db.GetUser(context.Background(), s.State.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf("Failed to retrieve user id: /n%v/n", err)
-	}
+
 	url := cmd.Args[0]
 	feed, err := s.Db.GetFeedByURL(context.Background(), sql.NullString{String: url, Valid: true})
 	if err != nil {
@@ -203,12 +190,7 @@ func HandlerFollow(s *config.State, cmd Command) error {
 	return nil
 }
 
-func HandlerFollowing(s *config.State, cmd Command) error {
-	userName := s.State.CurrentUserName
-	user, err := s.Db.GetUser(context.Background(), userName)
-	if err != nil {
-		return fmt.Errorf("Failed to retrieve user id: /n%v/n", err)
-	}
+func HandlerFollowing(s *config.State, cmd Command, user database.User) error {
 
 	following, err := s.Db.GetFeedFollowsForUser(context.Background(), user.ID)
 	if err != nil {
