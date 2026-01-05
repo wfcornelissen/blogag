@@ -162,6 +162,30 @@ func HandlerFollow(s *config.State, cmd Command) error {
 	if len(cmd.Args) < 1 {
 		return fmt.Errorf("No arguements passed. Expected username")
 	}
+	user, err := s.Db.GetUser(context.Background(), s.State.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve user id: /n%v/n", err)
+	}
+	url := cmd.Args[1]
+	feed, err := s.Db.GetFeedByURL(context.Background(), sql.NullString{String: url, Valid: true})
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve feed id: /n%v/n", err)
+	}
+
+	newFollow := database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	}
+
+	feedFollow, err := s.Db.CreateFeedFollow(context.Background(), newFollow)
+	if err != nil {
+		return fmt.Errorf("Failed to create feed follow: /n%v/n", err)
+	}
+
+	fmt.Printf("Feed name: %v/nUser name: %v/n", feedFollow.FeedName, user.Name)
 
 	return nil
 }
